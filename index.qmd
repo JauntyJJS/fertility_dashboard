@@ -6,7 +6,6 @@ format:
     scrolling: true
     nav-buttons: [github]
     github: https://github.com/JauntyJJS/fertility_dashboard
-    link-external-newwindow: true
 ---
 
 ```{r}
@@ -16,7 +15,12 @@ format:
 
 library(here)
 library(readxl)
+library(tibble)
+library(fs)
+library(quarto)
+library(sessioninfo)
 library(dplyr)
+library(sessioninfo)
 library(tidyr)
 library(forcats)
 library(glue)
@@ -641,7 +645,10 @@ htmltools::div(
 
 ```
 
+
 # About
+
+## Column
 
 ::: card
 
@@ -681,3 +688,121 @@ If you want to conduct your own analysis, see the following resources:
 
 :::
 
+## Column
+
+
+
+```{r}
+#| title: "R Packages Used"
+
+get_r_package_info <- function() {
+
+  r_package_table <- sessioninfo::package_info()
+  rownames(r_package_table) <- NULL
+
+  r_package_table <- r_package_table |>
+    tibble::as_tibble() |>
+    dplyr::mutate(
+      version = ifelse(is.na(r_package_table$loadedversion),
+                       r_package_table$ondiskversion,
+                       r_package_table$loadedversion)) |>
+    dplyr::filter(.data[["attached"]] == TRUE) |>
+    dplyr::select(
+      dplyr::any_of(c("package", "version",
+                      "date", "source"))
+    )
+
+  return(r_package_table)
+
+}
+
+get_r_package_info() |>
+  reactable::reactable(
+    defaultPageSize = 5,
+    paginationType = "jump",
+  )
+
+```
+
+### Row
+
+```{r}
+#| title: "R Session Info"
+
+get_quarto_version <- function(
+    test_sys_path = FALSE,
+    test_no_path = FALSE
+) {
+
+  # Taken from https://github.com/r-lib/sessioninfo/issues/75
+  if (isNamespaceLoaded("quarto") && isFALSE(test_sys_path)) {
+    path <- quarto::quarto_path() |>
+      fs::path_real()
+    ver <- system("quarto -V", intern = TRUE)
+    if (is.null(path) || isTRUE(test_no_path)) {
+      "NA (via quarto)"
+    } else {
+      paste0(ver, " @ ", path, "/ (via quarto)")
+    }
+  } else {
+    path <- Sys.which("quarto") |>
+      fs::path_real()
+    if (path == "" || isTRUE(test_no_path)) {
+      "NA"
+    } else {
+      ver <- system("quarto -V", intern = TRUE)
+      paste0(ver, " @ ", path)
+    }
+  }
+}
+
+
+get_knitr_version <- function() {
+
+  knitr_info <- "NA"
+
+  r_package_table <- sessioninfo::package_info(
+    pkgs = c("installed")
+  ) |>
+    dplyr::filter(.data[["package"]] == "knitr")
+
+  if (nrow(r_package_table) == 1) {
+
+    knitr_version <- r_package_table$loadedversion[1]
+    knitr_source <- r_package_table$source[1]
+
+    knitr_info <- paste0(
+      knitr_version, " from ",
+      knitr_source)
+  }
+
+  return(knitr_info)
+
+}
+
+get_r_platform_info <- function() {
+
+  r_platform_table <- sessioninfo::platform_info()
+  r_platform_table[["quarto"]] <- get_quarto_version()[1]
+  r_platform_table[["knitr"]] <- get_knitr_version()[1]
+
+  r_platform_table <- data.frame(
+    setting = names(r_platform_table),
+    value = unlist(r_platform_table,
+                   use.names = FALSE),
+    stringsAsFactors = FALSE
+  )
+
+  return(r_platform_table)
+}
+
+r_platform_table <- get_r_platform_info()
+
+r_platform_table |>
+  reactable::reactable(
+    defaultPageSize = 5,
+    paginationType = "jump",
+  )
+
+
+```
