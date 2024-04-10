@@ -658,7 +658,7 @@ If you want to conduct your own analysis, see the following resources:
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Resource                 | Link                                                                                                                                                        |
 +==========================+=============================================================================================================================================================+
-| Births and Fertility     | [<i class='bi bi-globe'></i> Website](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/latest-data)                    |
+| Births and Fertility     | [<i class='bi bi-globe'></i> Website](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/latest-data){target="_blank"}   |
 | Data from Department     |                                                                                                                                                             |
 | of Statistics Singapore  |                                                                                                                                                             |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
