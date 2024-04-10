@@ -1,0 +1,629 @@
+---
+title: "SG Fertility Dashboard"
+format: 
+  dashboard:
+    orientation: columns
+    scrolling: true 
+---
+
+```{r}
+#| label: load packages
+#| message: false
+#| echo: false
+
+library(here)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(glue)
+library(plotly)
+library(htmltools)
+library(reactable)
+library(crosstalk)
+
+```
+
+
+```{r}
+#| label: load-data
+#| message: false
+
+birth_data <- readxl::read_excel(
+  path = here::here(
+    "data", 
+    "Live-Births By Sex And Ethnic Group, Monthly.xlsx"
+  )
+)
+
+fertility_rate_data <- readxl::read_excel(
+  path = here::here(
+    "data", 
+    "Fertility Rate By Ethnic Group, Yearly.xlsx"
+  )
+)
+```
+
+
+```{r}
+#| label: prep-data
+
+
+fertility_rate_data_year <- fertility_rate_data |> 
+  tidyr::pivot_longer(
+    cols = -c("Ethnicity"),
+    names_to = c("Year"),
+    values_to = "Total_Fertility_Rate_Per_Female"
+  ) |> 
+  dplyr::mutate(
+    Ethnicity = dplyr::case_when(
+      .data[["Ethnicity"]] == "Chinese (Per Female)" ~ "Chinese",
+      .data[["Ethnicity"]] == "Malays (Per Female)" ~ "Malays",
+      .data[["Ethnicity"]] == "Indians (Per Female)" ~ "Indians",
+      .data[["Ethnicity"]] == "All (Per Female)" ~ "Total*",
+    ),
+    Ethnicity = forcats::fct_relevel(
+      .data[["Ethnicity"]],
+      c("Chinese", "Malays", "Indians", "Total*")
+    )
+  ) |> 
+  dplyr::filter(
+    .data[["Year"]] >= 1980
+  )
+
+birth_data_long <- birth_data |>
+  tidyr::pivot_longer(
+    cols = -c("Ethnicity", "Gender"),
+    names_to = c("Year", "Month"),
+    names_pattern = "(\\d{4})\\s(\\w{3})",
+    values_to = "count"
+  ) |> 
+  dplyr::mutate(
+    Ethnicity = forcats::fct_relevel(
+      .data[["Ethnicity"]],
+      c("Chinese", "Malays", "Indians", "Others")
+    )
+  )
+
+birth_data_both_gender <- birth_data_long |> 
+  dplyr::summarise(
+    total_live_birth = sum(.data[["count"]], na.rm = TRUE),
+    .by = c("Ethnicity", "Year")
+  ) |> 
+  dplyr::filter(
+    .data[["Year"]] >= 1980
+  )
+
+birth_data_male <- birth_data_long |> 
+  dplyr::summarise(
+    total_live_birth = sum(.data[["count"]], na.rm = TRUE),
+    .by = c("Ethnicity", "Year", "Gender")
+  ) |> 
+  dplyr::filter(
+    .data[["Year"]] >= 1980 & .data[["Gender"]] == "Male"
+  )
+
+birth_data_female <- birth_data_long |> 
+  dplyr::summarise(
+    total_live_birth = sum(.data[["count"]], na.rm = TRUE),
+    .by = c("Ethnicity", "Year", "Gender")
+  ) |> 
+  dplyr::filter(
+    .data[["Year"]] >= 1980 & .data[["Gender"]] == "Female"
+  )
+
+birth_data_for_display <- dplyr::bind_rows(
+  birth_data_male,
+  birth_data_female
+)
+
+```
+
+## Column {width ="50%"}
+
+```{r}
+#| title: ""
+
+# For the hover text
+text_input <- glue::glue(
+   "{fertility_rate_data_year[['Ethnicity']]}: {format(fertility_rate_data_year[['Total_Fertility_Rate_Per_Female']], big.mark = ",", digits = 1)}"
+)
+
+plot <- plotly::plot_ly() |> 
+  plotly::add_trace(
+    data = fertility_rate_data_year,
+    x = fertility_rate_data_year[["Year"]],
+    y = fertility_rate_data_year[["Total_Fertility_Rate_Per_Female"]], 
+    color = fertility_rate_data_year[["Ethnicity"]],
+    colors = c(Chinese = "#efb9e7", 
+               Malays = "#90ee90", 
+               Indians = "#c5bce0", 
+               `Total*` = "#b67e54"),
+    type = "scatter",
+    mode = "lines+markers",
+    marker = list(
+      size = 10,
+      line = list(color = "black", width = 1.5)
+    ),
+    linetype = fertility_rate_data_year[["Ethnicity"]],
+    linetypes = c(Chinese = "solid", 
+                  Malays = "solid", 
+                  Indians = "solid", 
+                  `Total*` = "solid"),
+    line = list(
+      width = 5
+    ),
+    name = fertility_rate_data_year[["Ethnicity"]],
+    text = text_input,
+    hovertemplate = '%{text}<extra></extra>'
+  ) |> 
+  plotly::layout(
+    title = list(text = "<b>Resident Total Fertility Rate by Ethnicity<b>" , 
+                 x = 0.5, 
+                 y = 1, 
+                 pad = list(l = 5, r = 5, b = 5, t = 20),
+                 xanchor = 'center',
+                 font = list(size = 20)),
+    xaxis = list(title = "", 
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 tickangle = -30,
+                 gridcolor = "#eff5ee",
+                 showgrid = TRUE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = FALSE,
+                 rangeslider = list(thickness = 0.05),
+                 autorange = TRUE,
+                 automargin = TRUE,
+                 fixedrange = FALSE),
+    yaxis = list(title = "",
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 gridcolor = "#c8cdc6",
+                 showgrid = TRUE,
+                 showline = FALSE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = TRUE,
+                 range = list(0, 3),
+                 rangemode = "tozero",
+                 autorange = FALSE,
+                 automargin = TRUE,
+                 fixedrange = TRUE), 
+    hovermode = "x unified",
+    legend = list(
+      title = list(text = "Ethnicity"),
+      orientation = 'h',
+      # Centered at x axis
+      xanchor = "center",
+      x = 0.5,
+      # Place on the top
+      y = 1,
+      font = list(size = 14)
+    ), 
+    autosize = TRUE,
+    plot_bgcolor = "#eff5ee",
+    paper_bgcolor = "#eff5ee",
+    margin = list(l = 10, r = 10, b = 10, t = 50, pad = 10)
+  ) |>
+  plotly::add_annotations(
+    x = 0,
+    y = 1,
+    xref = "paper",
+    yref = "paper",
+    yanchor = "bottom",
+    text = "Total Fertility Rate\nPer Female",
+    showarrow = FALSE,
+    font = list(size = 15)
+  ) |>
+  plotly::add_annotations(
+    x = 0,
+    y = 0,
+    xref = "paper",
+    yref = "paper",
+    text = "*\tIncludes the ethnic group 'Others'",
+    showarrow = FALSE,
+    font = list(size = 10)
+  )
+
+plot
+```
+
+### Row {.tabset}
+
+```{r}
+#| title: "All"
+
+# For the hover text
+text_input <- glue::glue(
+   "{birth_data_both_gender[['Ethnicity']]}: {birth_data_both_gender[['total_live_birth']]}"
+)
+
+plot <- plotly::plot_ly() |> 
+  plotly::add_trace(
+    data = birth_data_both_gender,
+    x = birth_data_both_gender[["Year"]],
+    y = birth_data_both_gender[["total_live_birth"]], 
+    color = birth_data_both_gender[["Ethnicity"]],
+    colors = c(Chinese = "#efb9e7", 
+               Malays = "#90ee90", 
+               Indians = "#c5bce0", 
+               Others = "#b67e54"),
+    type = "scatter",
+    mode = "lines+markers",
+    marker = list(
+      size = 10,
+      line = list(color = "black", width = 1.5)
+    ),
+    line = list(
+      width = 5
+    ),
+    linetype = birth_data_both_gender[["Ethnicity"]],
+    linetypes = c(Chinese = "solid", 
+                  Malays = "solid", 
+                  Indians = "solid", 
+                  Others = "solid"),
+    name = birth_data_both_gender[["Ethnicity"]],
+    text = text_input,
+    hovertemplate = '%{text}<extra></extra>'
+  ) |> 
+  plotly::layout(
+    title = list(text = "<b>Resident Total Live Birth by Ethnicity<b>" ,
+                 x = 0.5,
+                 y = 1,
+                 pad = list(l = 5, r = 5, b = 5, t = 20),
+                 xanchor = 'center',
+                 font = list(size = 20)),
+    xaxis = list(title = "", 
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 tickangle = -30,
+                 gridcolor = "#eff5ee",
+                 showgrid = TRUE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = FALSE,
+                 rangeslider = list(thickness = 0.05),
+                 automargin = TRUE,
+                 autorange = TRUE,
+                 fixedrange = FALSE),
+    yaxis = list(title = "",
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 gridcolor = "#c8cdc6",
+                 showgrid = TRUE,
+                 showline = FALSE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = TRUE,
+                 rangemode = "tozero",
+                 automargin = TRUE,
+                 autorange = TRUE,
+                 fixedrange = FALSE), 
+    hovermode = "x unified",
+    legend = list(
+      title = list(text = "Ethnicity"),
+      orientation = 'h',
+      # Centered at x axis
+      xanchor = "center",
+      x = 0.5,
+      # Place on the top
+      y = 1,
+      font = list(size = 14)
+    ), 
+    plot_bgcolor = "#eff5ee",
+    paper_bgcolor = "#eff5ee",
+    margin = list(l = 10, r = 10, b = 10, t = 50, pad = 10) 
+  ) |>
+  plotly::add_annotations(
+    x = 0,
+    y = 1,
+    xref = "paper",
+    yref = "paper",
+    yanchor = "bottom",
+    text = "Total Live Birth",
+    showarrow = FALSE,
+    font = list(size = 15)
+  )
+  
+plot
+```
+
+```{r}
+#| title: "Male"
+
+# For the hover text
+text_input <- glue::glue(
+   "{birth_data_male[['Ethnicity']]}: {birth_data_male[['total_live_birth']]}"
+)
+
+plot <- plotly::plot_ly() |> 
+  plotly::add_trace(
+    data = birth_data_male,
+    x = birth_data_male[["Year"]],
+    y = birth_data_male[["total_live_birth"]], 
+    color = birth_data_male[["Ethnicity"]],
+    colors = c(Chinese = "#efb9e7", 
+               Malays = "#90ee90", 
+               Indians = "#c5bce0", 
+               Others = "#b67e54"),
+    type = "scatter",
+    mode = "lines+markers",
+    marker = list(
+      size = 10,
+      line = list(color = "black", width = 1.5)
+    ),
+    line = list(
+      width = 5
+    ),
+    linetype = birth_data_male[["Ethnicity"]],
+    linetypes = c(Chinese = "solid", 
+                  Malays = "solid", 
+                  Indians = "solid", 
+                  Others = "solid"),
+    name = birth_data_male[["Ethnicity"]],
+    text = text_input,
+    hovertemplate = '%{text}<extra></extra>'
+  ) |> 
+  plotly::layout(
+    title = list(text = "<b>Resident Male Live Birth by Ethnicity<b>" ,
+                 x = 0.5,
+                 y = 1,
+                 pad = list(l = 5, r = 5, b = 5, t = 20),
+                 xanchor = 'center',
+                 font = list(size = 20)),
+    xaxis = list(title = "", 
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 tickangle = -30,
+                 gridcolor = "#eff5ee",
+                 showgrid = TRUE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = FALSE,
+                 rangeslider = list(thickness = 0.05),
+                 autorange = TRUE,
+                 fixedrange = FALSE),
+    yaxis = list(title = "",
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 gridcolor = "#c8cdc6",
+                 showgrid = TRUE,
+                 showline = FALSE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = TRUE,
+                 rangemode = "tozero",
+                 autorange = TRUE,
+                 fixedrange = FALSE), 
+    hovermode = "x unified",
+    legend = list(
+      title = list(text = "Ethnicity"),
+      orientation = 'h',
+      # Centered at x axis
+      xanchor = "center",
+      x = 0.5,
+      # Place on the top
+      y = 1,
+      font = list(size = 14)
+    ), 
+    plot_bgcolor = "#eff5ee",
+    paper_bgcolor = "#eff5ee",
+    margin = list(l = 10, r = 10, b = 10, t = 50, pad = 10) 
+  ) |>
+  plotly::add_annotations(
+    x = 0,
+    y = 1,
+    xref = "paper",
+    yref = "paper",
+    yanchor = "bottom",
+    text = "Total Male Live Birth",
+    showarrow = FALSE,
+    font = list(size = 15)
+  )
+  
+plot
+```
+
+```{r}
+#| title: "Female"
+
+# For the hover text
+text_input <- glue::glue(
+   "{birth_data_female[['Ethnicity']]}: {birth_data_female[['total_live_birth']]}"
+)
+
+plot <- plotly::plot_ly() |> 
+  plotly::add_trace(
+    data = birth_data_female,
+    x = birth_data_female[["Year"]],
+    y = birth_data_female[["total_live_birth"]], 
+    color = birth_data_female[["Ethnicity"]],
+    colors = c(Chinese = "#efb9e7", 
+               Malays = "#90ee90", 
+               Indians = "#c5bce0", 
+               Others = "#b67e54"),
+    type = "scatter",
+    mode = "lines+markers",
+    marker = list(
+      size = 10,
+      line = list(color = "black", width = 1.5)
+    ),
+    line = list(
+      width = 5
+    ),
+    linetype = birth_data_female[["Ethnicity"]],
+    linetypes = c(Chinese = "solid", 
+                  Malays = "solid", 
+                  Indians = "solid", 
+                  Others = "solid"),
+    name = birth_data_female[["Ethnicity"]],
+    text = text_input,
+    hovertemplate = '%{text}<extra></extra>'
+  ) |> 
+  plotly::layout(
+    title = list(text = "<b>Resident Female Live Birth by Ethnicity<b>" ,
+                 x = 0.5,
+                 y = 1,
+                 pad = list(l = 5, r = 5, b = 5, t = 20),
+                 xanchor = 'center',
+                 font = list(size = 20)),
+    xaxis = list(title = "", 
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 tickangle = -30,
+                 gridcolor = "#eff5ee",
+                 showgrid = TRUE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = FALSE,
+                 rangeslider = list(thickness = 0.05),
+                 autorange = TRUE,
+                 fixedrange = FALSE),
+    yaxis = list(title = "",
+                 titlefont = list(size = 10),
+                 tickfont = list(size = 12),
+                 gridcolor = "#c8cdc6",
+                 showgrid = TRUE,
+                 showline = FALSE,
+                 showticklabels = TRUE,
+                 tickcolor = "",
+                 ticks = "",
+                 zeroline = TRUE,
+                 rangemode = "tozero",
+                 autorange = TRUE,
+                 fixedrange = FALSE), 
+    hovermode = "x unified",
+    legend = list(
+      title = list(text = "Ethnicity"),
+      orientation = 'h',
+      # Centered at x axis
+      xanchor = "center",
+      x = 0.5,
+      # Place on the top
+      y = 1,
+      font = list(size = 14)
+    ), 
+    plot_bgcolor = "#eff5ee",
+    paper_bgcolor = "#eff5ee",
+    margin = list(l = 10, r = 10, b = 10, t = 50, pad = 10) 
+  ) |>
+  plotly::add_annotations(
+    x = 0,
+    y = 1,
+    xref = "paper",
+    yref = "paper",
+    yanchor = "bottom",
+    text = "Total Female Live Birth",
+    showarrow = FALSE,
+    font = list(size = 15)
+  )
+  
+plot
+```
+
+## Column {width ="50%"}
+
+```{r}
+#| title: "Total Fertility Rate Data"
+
+fertility_rate_data_year <- fertility_rate_data_year |> 
+  dplyr::mutate(
+    Year = as.numeric(.data[["Year"]])
+  ) |> 
+  dplyr::rename(
+    `Fertility Rate Per Female` = "Total_Fertility_Rate_Per_Female"
+  )
+
+data <- crosstalk::SharedData$new(fertility_rate_data_year)
+
+htmltools::div(
+  style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;",
+  htmltools::div(
+    crosstalk::filter_select(
+      id = "Ethnicity", 
+      label = "Ethnicity", 
+      sharedData = data, 
+      group = ~Ethnicity, 
+      allLevels = TRUE),
+    crosstalk::filter_slider(
+      id = "Year", 
+      label = "Year", 
+      sharedData = data, 
+      column = "Year"),
+    crosstalk::filter_slider(
+      id = "Fertility Rate Per Female", 
+      label = "Fertility Rate Per Female", 
+      sharedData = data, 
+      column = "Fertility Rate Per Female", 
+      width = "100%")
+  ),
+  htmltools::div(
+    style = "grid-column: span 3;",
+    reactable(data, minRows = 10)
+  )
+)
+
+```
+
+```{r}
+#| title: "Total Birth Data"
+
+birth_data_for_display <- birth_data_for_display |> 
+  dplyr::mutate(
+    Year = as.numeric(.data[["Year"]])
+  ) |> 
+  dplyr::rename(
+    `Total Live Birth` = "total_live_birth"
+  ) |> 
+  dplyr::relocate(
+    "Gender",
+    .after = "Ethnicity"
+  )
+
+data <- crosstalk::SharedData$new(birth_data_for_display)
+
+htmltools::div(
+  style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;",
+  htmltools::div(
+    crosstalk::filter_select(
+      id = "Ethnicity", 
+      label = "Ethnicity", 
+      sharedData = data, 
+      group = ~Ethnicity, 
+      allLevels = TRUE),
+    crosstalk::filter_checkbox(
+      id = "Gender", 
+      label = "Gender", 
+      sharedData = data, 
+      group = ~Gender, 
+      allLevels = TRUE),
+    crosstalk::filter_slider(
+      id = "Year", 
+      label = "Year", 
+      sharedData = data, 
+      column = "Year"),
+    crosstalk::filter_slider(
+      id = "Total Live Birth", 
+      label = "Total Live Birth", 
+      sharedData = data, 
+      column = "Total Live Birth", 
+      width = "100%")
+  ),
+  htmltools::div(
+    style = "grid-column: span 3;",
+    reactable(data, minRows = 10)
+  )
+)
+
+```
+
+
