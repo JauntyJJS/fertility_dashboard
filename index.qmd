@@ -3,7 +3,9 @@ title: "SG Fertility Dashboard"
 format: 
   dashboard:
     orientation: columns
-    scrolling: true 
+    scrolling: true
+    nav-buttons: [github]
+    github: https://github.com/JauntyJJS/fertility_dashboard
 ---
 
 ```{r}
@@ -118,6 +120,8 @@ birth_data_for_display <- dplyr::bind_rows(
 )
 
 ```
+
+# Plots and Tables
 
 ## Column {width ="50%"}
 
@@ -568,7 +572,12 @@ htmltools::div(
   ),
   htmltools::div(
     style = "grid-column: span 3;",
-    reactable(data, minRows = 10)
+    htmltools::browsable(
+      htmltools::tagList(
+        reactable::reactable(data, minRows = 10, elementId = "tfr-table"),
+        htmltools::tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('tfr-table')")
+      )
+    )
   )
 )
 
@@ -620,10 +629,67 @@ htmltools::div(
   ),
   htmltools::div(
     style = "grid-column: span 3;",
-    reactable(data, minRows = 10)
+    htmltools::browsable(
+      htmltools::tagList(
+        reactable::reactable(data, minRows = 10, elementId = "birth-table"),
+        htmltools::tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('birth-table')")
+      )
+    )
   )
 )
 
 ```
 
+# About
+
+::: card
+
+::: card-header
+
+About The Dashboard
+:::
+
+::: card-body
+
+This dashboard is built with [Quarto Dashboards](https://quarto.org/docs/dashboards/). It is based on the [Fertility Dashboard](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/visualising-data/fertility-dashboard) from [Department of Statistics Singapore](https://www.singstat.gov.sg/).
+
+If you want to conduct your own analysis, see the following resources:
+
+```{r}
+#| label: resources table
+#| echo: false
+#| message: false
+#| warnings: false
+#| results: "asis"
+
+tabl <- "
+
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+| Resource                 | Link                                                                                                         |
++==========================+==============================================================================================================+
+| Births and Fertility     | [Website](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/latest-data) |
+| Data from Department     |                                                                                                              |
+| of Statistics Singapore  |                                                                                                              |
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+| Fertility Rate By        | [Fertility Rate By Ethnic Group, Yearly.xlsx](data/Fertility Rate By Ethnic Group, Yearly.xlsx)              |
+| Ethnic Group, Yearly     |                                                                                                              |
+| till 2023 in Excel       |                                                                                                              |
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+| Live-Births By Sex And   | [Live-Births By Sex And Ethnic Group, Monthly.xlsx](data/Live-Births By Sex And Ethnic Group, Monthly.xlsx)  |
+| Ethnic Group, Monthly    |                                                                                                              |
+| till Dec 2023 in Excel   |                                                                                                              |
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+| Quarto script to create  | [Quarto Script](index.qmd)                                                                                   |
+| Dashboard                |                                                                                                              |
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+| Github repository        | [<i class='bi bi-github'></i> Source code](https://github.com/JauntyJJS/fertility_dashboard)                 |
++--------------------------+--------------------------------------------------------------------------------------------------------------+
+
+"
+cat(tabl)
+```
+
+:::
+
+:::
 
