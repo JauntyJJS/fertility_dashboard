@@ -6,6 +6,7 @@ format:
     scrolling: true
     nav-buttons: [github]
     github: https://github.com/JauntyJJS/fertility_dashboard
+    link-external-newwindow: true
 ---
 
 ```{r}
@@ -658,7 +659,7 @@ If you want to conduct your own analysis, see the following resources:
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Resource                 | Link                                                                                                                                                        |
 +==========================+=============================================================================================================================================================+
-| Births and Fertility     | [<i class='bi bi-globe'></i> Website](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/latest-data){target="_blank"}   |
+| Births and Fertility     | [<i class='bi bi-globe'></i> Website](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/latest-data)                    |
 | Data from Department     |                                                                                                                                                             |
 | of Statistics Singapore  |                                                                                                                                                             |
 +--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
