@@ -135,7 +135,7 @@ birth_data_for_display <- dplyr::bind_rows(
 
 # For the hover text
 text_input <- glue::glue(
-   "{fertility_rate_data_year[['Ethnicity']]}: {format(fertility_rate_data_year[['Total_Fertility_Rate_Per_Female']], big.mark = ",", digits = 1)}"
+   "{fertility_rate_data_year[['Ethnicity']]}: {format(fertility_rate_data_year[['Total_Fertility_Rate_Per_Female']], big.mark = ",", digits = 2)}"
 )
 
 plot <- plotly::plot_ly() |> 
