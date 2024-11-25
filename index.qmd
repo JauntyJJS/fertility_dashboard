@@ -4,7 +4,7 @@ format:
   dashboard:
     scrolling: true
     nav-buttons: [github]
-    github: https://github.com/JauntyJJS/fertility_dashboard
+    github: https://github.com/JauntyJJS/fertility_dashboard{target="_blank"}
 ---
 
 ```{r}
@@ -128,7 +128,7 @@ birth_data_for_display <- dplyr::bind_rows(
 
 # Fertility Rate {orientation="rows" scrolling="true"}
 
-## Row
+## Row - 2023 Fertility Value Boxes
 
 ```{r}
 #| label: 2023 Fertility Rate by Ethnicity Total Box
@@ -199,9 +199,9 @@ list(
 )
 ```
 
-## Row
+## Row - Fertility Rate Plot and Table
 
-### Column
+### Column - Fertility Rate Plot
 
 ```{r}
 #| label: Total Fertility Rate by Ethnicity Plot
@@ -315,7 +315,7 @@ plot <- plotly::plot_ly() |>
 plot
 ```
 
-### Column
+### Column - Fertility Rate Table
 
 ```{r}
 #| label: Total Fertility Rate by Ethnicity Table
@@ -367,9 +367,9 @@ htmltools::div(
 
 # Live Birth {orientation="rows" scrolling="true"}
 
-## Row
+## Row - Live Birth Plot and Table
 
-### Column {.tabset}
+### Column - Live Birth Plot {.tabset}
 
 ```{r}
 #| label: Total Live Birth by Ethnicity Plot
@@ -670,7 +670,7 @@ plot <- plotly::plot_ly() |>
 plot
 ```
 
-### Column
+### Column - Live Birth Table
 
 ```{r}
 #| label: Total Birth Data by Ethnicity Table
@@ -733,16 +733,9 @@ htmltools::div(
 
 # About {orientation="columns" scrolling="true"}
 
-## Column {width="60%"}
+## Column - About the Dashboard {width="60%"}
 
-::: card
-
-::: card-header
-
-📊 About The Dashboard
-:::
-
-::: card-body
+::: {.card title="📊 About The Dashboard"}
 
 This dashboard is built with [Quarto Dashboards](https://quarto.org/docs/dashboards/){target="_blank"}. It is based on the [Fertility Dashboard](https://www.singstat.gov.sg/find-data/search-by-theme/population/births-and-fertility/visualising-data/fertility-dashboard){target="_blank"} from [Department of Statistics Singapore](https://www.singstat.gov.sg/){target="_blank"}.
 
@@ -787,9 +780,7 @@ Made by Jeremy Selva [`r fontawesome::fa(name = "linkedin", fill = "#273B8C")`](
 
 :::
 
-:::
-
-## Column {width="40%"}
+## Column - R Session and Packages Used {width="40%"}
 
 ```{r}
 #| label: R Package Used
