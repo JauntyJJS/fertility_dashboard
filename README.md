@@ -4,7 +4,8 @@
 <a href="https://github.com/JauntyJJS/fertility_dashboard"
 target="_blank">Source code</a> for creating the Singapore fertility
 <a href="https://jauntyjjs.github.io/fertility_dashboard/"
-target="_blank">dashboard</a> using Quarto.
+target="_blank">dashboard</a> using
+<a href="https://quarto.org/" target="_blank">Quarto</a>.
 
 <img src="share-card.png"
 data-fig-alt="A preview of the completed dashboard."
