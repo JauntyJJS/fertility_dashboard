@@ -1,0 +1,8 @@
+---
+title: "Fertility Dashboard"
+format: gfm
+---
+
+[Source code](https://github.com/JauntyJJS/fertility_dashboard){target="_blank"} for creating the Singapore fertility [dashboard](https://jauntyjjs.github.io/fertility_dashboard/){target="_blank"} using Quarto.
+
+![](share-card.png){fig-alt="A preview of the completed dashboard." fig-align="center"}
